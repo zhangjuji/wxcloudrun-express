@@ -25,7 +25,7 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// 小程序调用，获取微信 Open ID
+// 小程序调用，获取微信 openid
 app.get("/api/wx_openid", async (req, res) => {
   const code = req.query.code;
   
