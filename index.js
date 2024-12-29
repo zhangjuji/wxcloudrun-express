@@ -5,7 +5,7 @@ const morgan = require("morgan");
 const axios = require("axios");
 const { init: initDB, Counter } = require("./db");
 
-// 添加微信配置
+// 添加微信小程序配置
 const config = {
   API_URL: "https://api.weixin.qq.com/sns/jscode2session",
   APP_ID: "wx435ec14cba95f522",
