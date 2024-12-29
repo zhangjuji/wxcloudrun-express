@@ -2,7 +2,15 @@ const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const axios = require("axios");
 const { init: initDB, Counter } = require("./db");
+
+// 添加微信配置
+const config = {
+  API_URL: "https://api.weixin.qq.com/sns/jscode2session",
+  APP_ID: "wx435ec14cba95f522",
+  APP_SECRET: "c9c59e954cf932bf1552731c3d78f457"
+};
 
 const logger = morgan("tiny");
 
@@ -17,35 +25,35 @@ app.get("/", async (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// 更新计数
-app.post("/api/count", async (req, res) => {
-  const { action } = req.body;
-  if (action === "inc") {
-    await Counter.create();
-  } else if (action === "clear") {
-    await Counter.destroy({
-      truncate: true,
-    });
-  }
-  res.send({
-    code: 0,
-    data: await Counter.count(),
-  });
-});
-
-// 获取计数
-app.get("/api/count", async (req, res) => {
-  const result = await Counter.count();
-  res.send({
-    code: 0,
-    data: result,
-  });
-});
-
 // 小程序调用，获取微信 Open ID
 app.get("/api/wx_openid", async (req, res) => {
-  if (req.headers["x-wx-source"]) {
-    res.send(req.headers["x-wx-openid"]);
+  const code = req.query.code;
+  
+  if (!code) {
+    return res.status(400).json({ error: "Missing code parameter" });
+  }
+
+  try {
+    const response = await axios.get(config.API_URL, {
+      params: {
+        appid: config.APP_ID,
+        secret: config.APP_SECRET,
+        js_code: code,
+        grant_type: "authorization_code"
+      }
+    });
+
+    const { openid } = response.data;
+    
+    if (openid) {
+      res.json({ openid });
+    } else {
+      res.status(400).json({ error: "openid not found in response" });
+    }
+  } catch (error) {
+    res.status(error.response?.status || 500).json({ 
+      error: "Failed to fetch openid from API" 
+    });
   }
 });
 
